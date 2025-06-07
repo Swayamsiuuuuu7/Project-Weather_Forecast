@@ -5,7 +5,7 @@ const axios = require('axios');
 
 const userForecasts = {};
 
-console.log('Loaded API key:', process.env.OPENWEATHER_API_KEY);  // <-- Add here to log API key at load time
+console.log('Loaded API key:', process.env.OPENWEATHER_API_KEY);
 
 router.post('/generate', (req, res) => {
   const { name, location } = req.body;
@@ -32,6 +32,7 @@ router.get('/user/:id', async (req, res) => {
 
     res.json({ name: user.name, location: user.location, forecast });
   } catch (error) {
+    console.error('Weather API error:', error.message);
     res.json({ name: user.name, location: user.location, forecast: 'Could not fetch weather data' });
   }
 });
