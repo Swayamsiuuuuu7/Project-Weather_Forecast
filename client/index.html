@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Weather Forecast App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 25px;
+      color: #2c3e50;
+      font-weight: 700;
+      font-size: 1.9rem;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input {
+      padding: 14px 18px;
+      font-size: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+    input:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 8px rgba(52,152,219,0.4);
+    }
+    button {
+      padding: 14px 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      background: #3498db;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    #result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #ecf0f1;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      color: #34495e;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #result .temp {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #e67e22;
+    }
+    #result .desc {
+      text-transform: capitalize;
+      font-style: italic;
+    }
+    #result img {
+      width: 48px;
+      height: 48px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Get Your Weather Forecast</h1>
+    <form id="weatherForm">
+      <input type="text" id="name" placeholder="Your Name" required />
+      <input type="text" id="location" placeholder="Location" required />
+      <button type="submit">Get Forecast</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+  document.getElementById('weatherForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const location = document.getElementById('location').value.trim();
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = 'Loading...';
+
+    try {
+      const res = await fetch('http://localhost:5050/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, location })
+      });
+
+      const data = await res.json();
+      if (!data.url) throw new Error('Failed to generate forecast URL');
+
+      const forecastRes = await fetch(data.url);
+      const forecastData = await forecastRes.json();
+
+      if (!forecastData.forecast) throw new Error('No forecast data received');
+
+      // Extract temperature and description from forecast string for better display
+      const tempMatch = forecastData.forecast.match(/Temperature: ([\d.]+)°C/i);
+      const descMatch = forecastData.forecast.match(/Weather in .*?: (.*), Temperature/i);
+      const iconMap = {
+        clear: '☀️',
+        rain: '🌧️',
+        drizzle: '🌦️',
+        thunderstorm: '⛈️',
+        snow: '❄️',
+        clouds: '☁️',
+        mist: '🌫️',
+      };
+
+      const description = descMatch ? descMatch[1] : forecastData.forecast;
+      let icon = '🌈';
+      for (const key in iconMap) {
+        if (description.toLowerCase().includes(key)) {
+          icon = iconMap[key];
+          break;
+        }
+      }
+
+      resultDiv.innerHTML = `
+        <div>${icon}</div>
+        <div class="desc">${description}</div>
+        <div class="temp">${tempMatch ? tempMatch[1] + '°C' : ''}</div>
+      `;
+    } catch (error) {
+      resultDiv.textContent = 'Error fetching weather. Please try again.';
+    }
+  });
+  </script>
+
+</body>
+</html>
